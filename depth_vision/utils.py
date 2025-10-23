@@ -18,6 +18,8 @@ def normalize_depth(depth_map: np.ndarray) -> np.ndarray:
     """
     depth_min = depth_map.min()
     depth_max = depth_map.max()
+    if depth_max == depth_min:
+        return np.zeros_like(depth_map, dtype=np.uint8)
     normalized = (depth_map - depth_min) / (depth_max - depth_min) * 255.0
     return normalized.astype(np.uint8)
 
