@@ -12,3 +12,8 @@ repos:
   rev: v3.2.6
   hooks:
   - id: pylint
+    args: [--rcfile=.pylintrc]
+    additional_dependencies:
+      - numpy
+      - opencv-python
+      - torch

@@ -1,0 +1,89 @@
+[MASTER]
+# Use multiple processes to speed up Pylint
+jobs=1
+
+# Pickle collected data for later comparisons
+persistent=yes
+
+# Allow loading of arbitrary C extensions
+unsafe-load-any-extension=no
+
+# Extension package allow list
+extension-pkg-allow-list=cv2
+
+[MESSAGES CONTROL]
+# Disable less important messages, focus on critical issues
+disable=
+    # Code style (less important)
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    C0302,  # too-many-lines
+    C0411,  # wrong-import-order (not critical)
+    C0415,  # import-outside-toplevel (sometimes necessary)
+    # Warnings (moderate importance - disabling overly restrictive ones)
+    W0107,  # unnecessary-pass (pass statements in abstract methods are fine)
+    W0212,  # protected-access (sometimes needed for legitimate reasons)
+    W0221,  # arguments-differ (can be intentional in overrides)
+    W0611,  # unused-import (can clean up manually)
+    W0621,  # redefined-outer-name (common in local scopes)
+    W0632,  # unbalanced-tuple-unpacking (often false positive)
+    W1309,  # f-string-without-interpolation (minor style issue)
+    W0105,  # pointless-string-statement (used for docstrings sometimes)
+    # Errors (keeping most, but disabling cv2 false positives)
+    E1101,  # no-member (cv2 members are dynamically loaded, causes false positives)
+
+[REPORTS]
+# Set the output format
+output-format=colorized
+
+# Tells whether to display a full report or only the messages
+reports=no
+
+# Activate the evaluation score
+score=yes
+
+[BASIC]
+# Good variable names which should always be accepted
+good-names=i,j,k,x,y,z,w,h,_,df,np,cv,ax,fig
+
+[FORMAT]
+# Maximum number of characters on a single line (relaxed)
+max-line-length=120
+
+# Maximum number of lines in a module (relaxed)
+max-module-lines=1500
+
+[DESIGN]
+# Maximum number of arguments for function / method (relaxed)
+max-args=10
+
+# Maximum number of attributes for a class (relaxed)
+max-attributes=15
+
+# Maximum number of boolean expressions in an if statement (relaxed)
+max-bool-expr=7
+
+# Maximum number of branch for function / method body (relaxed)
+max-branches=15
+
+# Maximum number of locals for function / method body (relaxed)
+max-locals=20
+
+# Maximum number of return / yield for function / method body (relaxed)
+max-returns=8
+
+# Maximum number of statements in function / method body (relaxed)
+max-statements=60
+
+[SIMILARITIES]
+# Minimum lines number of a similarity (relaxed)
+min-similarity-lines=10
+
+[IMPORTS]
+# Allow wildcard imports from modules that list __all__
+allow-wildcard-with-all=yes
+
+[EXCEPTIONS]
+# Exceptions that will emit a warning when caught
+overgeneral-exceptions=builtins.BaseException,builtins.Exception
