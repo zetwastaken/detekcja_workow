@@ -80,11 +80,87 @@ def example_3_list_available():
     for model, specs in MiDaSDepthEstimator.SUPPORTED_MODELS.items():
         print(f"  - {model}: {specs}")
 
+    print("\nSupported Depth Anything models:")
+    from depth_vision.estimators.depth_anything import DepthAnythingEstimator
 
-def example_4_custom_estimator():
-    """Example 4: How to create a custom depth estimator"""
+    for model, specs in DepthAnythingEstimator.SUPPORTED_MODELS.items():
+        print(f"  - {model}: {specs}")
+
+
+def example_4_depth_anything():
+    """Example 4: Using Depth Anything V2"""
     print("\n" + "=" * 70)
-    print("Example 4: Custom Depth Estimator Template")
+    print("Example 4: Depth Anything V2 Usage")
+    print("=" * 70)
+
+    image = cv2.imread("data/worki_1.jpg")
+
+    # Try different model sizes
+    for model_size in ["small", "base"]:  # "large" takes more time
+        print(f"\nTesting Depth Anything V2 ({model_size})...")
+        try:
+            estimator = create_depth_estimator("depth_anything", model_size=model_size)
+
+            depth_map = estimator.estimate(image)
+
+            # Save visualization
+            colored = visualize_depth(depth_map)
+            output_path = f"output/depth_anything_{model_size}.png"
+            cv2.imwrite(output_path, colored)
+            print(f"  ✓ Saved: {output_path}")
+            print(f"  Depth range: [{depth_map.min():.2f}, {depth_map.max():.2f}]")
+
+            # Get model info
+            info = estimator.get_model_info()
+            print(f"  Model: {info['name']} ({info['variant']})")
+            print(f"  Device: {info['device']}")
+        except ImportError:
+            print(f"  ⚠️  Skipping: transformers package not installed")
+            print(f"     Install with: pip install transformers")
+            break
+
+
+def example_5_compare_models():
+    """Example 5: Compare MiDaS vs Depth Anything"""
+    print("\n" + "=" * 70)
+    print("Example 5: Compare Different Depth Estimators")
+    print("=" * 70)
+
+    image = cv2.imread("data/worki_1.jpg")
+
+    models_config = [
+        {"type": "midas", "config": {"model_type": "DPT_Hybrid"}},
+        {"type": "depth_anything", "config": {"model_size": "small"}},
+    ]
+
+    for model_cfg in models_config:
+        model_type = model_cfg["type"]
+        config = model_cfg["config"]
+
+        print(f"\nTesting {model_type} with config {config}...")
+        try:
+            estimator = create_depth_estimator(model_type, **config)
+
+            depth_map = estimator.estimate(image)
+
+            # Save visualization
+            colored = visualize_depth(depth_map)
+            output_path = f"output/comparison_{model_type}.png"
+            cv2.imwrite(output_path, colored)
+            print(f"  ✓ Saved: {output_path}")
+
+            info = estimator.get_model_info()
+            print(f"  Model: {info['name']}")
+            print(f"  Depth range: [{depth_map.min():.2f}, {depth_map.max():.2f}]")
+        except ImportError:
+            print(f"  ⚠️  Skipping: required packages not installed")
+            continue
+
+
+def example_6_custom_estimator():
+    """Example 6: How to create a custom depth estimator"""
+    print("\n" + "=" * 70)
+    print("Example 6: Custom Depth Estimator Template")
     print("=" * 70)
 
     # This is how you would create a custom estimator
@@ -121,10 +197,10 @@ def example_4_custom_estimator():
     print(f"\nAvailable estimators: {list(available.keys())}")
 
 
-def example_5_batch_processing():
-    """Example 5: Efficient batch processing"""
+def example_7_batch_processing():
+    """Example 7: Efficient batch processing"""
     print("\n" + "=" * 70)
-    print("Example 5: Batch Processing Multiple Images")
+    print("Example 7: Batch Processing Multiple Images")
     print("=" * 70)
 
     # List of images to process
@@ -154,16 +230,13 @@ def example_5_batch_processing():
     print(f"\n✓ Processed {len(depth_maps)} images")
 
 
-def example_6_future_models():
-    """Example 6: How to use future depth estimators"""
+def example_8_future_models():
+    """Example 8: How to use future depth estimators"""
     print("\n" + "=" * 70)
-    print("Example 6: Using Future Depth Estimators")
+    print("Example 8: Using Future Depth Estimators")
     print("=" * 70)
 
     print("\nOnce implemented, you'll be able to use them like this:")
-
-    print("\n# Depth Anything:")
-    print('estimator = create_depth_estimator("depth_anything", model_size="large")')
 
     print("\n# ZoeDepth:")
     print('estimator = create_depth_estimator("zoe", model_type="NK")')
@@ -188,9 +261,11 @@ if __name__ == "__main__":
     # example_1_basic_usage()
     # example_2_compare_models()
     example_3_list_available()
-    example_4_custom_estimator()
-    # example_5_batch_processing()
-    example_6_future_models()
+    # example_4_depth_anything()
+    # example_5_compare_models()
+    example_6_custom_estimator()
+    # example_7_batch_processing()
+    example_8_future_models()
 
     print("\n" + "=" * 70)
     print("✅ Examples complete!")

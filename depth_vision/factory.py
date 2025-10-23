@@ -6,6 +6,7 @@ Provides a simple interface to instantiate different depth estimation models.
 from typing import Dict, Type, Optional
 from .base import BaseDepthEstimator
 from .estimators.midas import MiDaSDepthEstimator
+from .estimators.depth_anything import DepthAnythingEstimator
 
 
 class DepthEstimatorFactory:
@@ -22,9 +23,9 @@ class DepthEstimatorFactory:
 
     _estimators: Dict[str, Type[BaseDepthEstimator]] = {
         "midas": MiDaSDepthEstimator,
+        "depth_anything": DepthAnythingEstimator,
         # Add more estimators here as they are implemented:
         # "zoe": ZoeDepthEstimator,
-        # "depth_anything": DepthAnythingEstimator,
         # "marigold": MarigoldEstimator,
     }
 
