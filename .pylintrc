@@ -31,6 +31,7 @@ disable=
     W1309,  # f-string-without-interpolation (minor style issue)
     W0105,  # pointless-string-statement (used for docstrings sometimes)
     # Errors (keeping most, but disabling cv2 false positives)
+    E0401,  # import-error (using .venv, packages are installed)
     E1101,  # no-member (cv2 members are dynamically loaded, causes false positives)
 
 [REPORTS]
