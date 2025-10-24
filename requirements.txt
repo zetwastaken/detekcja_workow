@@ -12,6 +12,7 @@ transformers>=4.35.0
 diffusers>=0.25.0
 accelerate
 hf-transfer
+scipy>=1.10.0  # Required for Marigold ensemble predictions
 
 # Optional: Development tools (uncomment if needed)
 # matplotlib>=3.7.0

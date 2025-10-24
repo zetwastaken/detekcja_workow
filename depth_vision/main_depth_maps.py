@@ -240,7 +240,7 @@ def main(estimator_type: str = "midas", **estimator_config):
     print("=" * 70)
 
     # Configuration
-    image_path = "data/worki_1.jpg"
+    image_path = str(Path(__file__).parent.parent / "data" / "worki_1.jpg")
 
     # Execute pipeline with specified estimator
     estimator = initialize_estimator(estimator_type, **estimator_config)
@@ -328,15 +328,13 @@ def process_multiple_images(
 
 
 if __name__ == "__main__":
-    # Example 1: Run with default MiDaS DPT_Large
-    # depth_map = main("midas", model_type="DPT_Large")
+    depth_map = main("midas", model_type="DPT_Large")
 
-    # depth_map_2 = main("depth_anything", model_size="large")
+    depth_map_2 = main("depth_anything", model_size="large")
 
-    # depth_map_3 = main("zoedepth", model_type="NK")
+    depth_map_3 = main("zoedepth", model_type="NK")
 
-    # Marigold with LCM variant - uses default 4 steps automatically
-    depth_map_4 = main("marigold", model_variant="base", num_inference_steps=1)
+    depth_map_4 = main("marigold", model_variant="base", num_inference_steps=50, ensemble_size=1) # +/-1 min per ensemble for GTX 1070 TI
 
     # Example 3: Process multiple images
     # images = ["data/worki_1.jpg", "data/worki_2.jpg"]

@@ -11,10 +11,6 @@ from typing import Dict, Any
 from diffusers import MarigoldDepthPipeline
 from ..base import BaseDepthEstimator
 
-# Enable parallel downloads for faster model downloads
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
-
-
 class MarigoldDepthEstimator(BaseDepthEstimator):
     """
     Marigold depth estimator using diffusion models.
@@ -104,10 +100,21 @@ class MarigoldDepthEstimator(BaseDepthEstimator):
         print(f"Loading Marigold ({self.model_variant}) model on {self.device}...")
         print(f"This may take a moment on first run (downloading ~2GB)...")
 
-        self.pipe = MarigoldDepthPipeline.from_pretrained(
-            model_repo,
-            torch_dtype=torch.float16 if self.device.type == "cuda" else torch.float32,
-        )
+        # Try to load from cache first, fallback to download if not available
+        try:
+            self.pipe = MarigoldDepthPipeline.from_pretrained(
+                model_repo,
+                torch_dtype=torch.float16 if self.device.type == "cuda" else torch.float32,
+                local_files_only=True,  # Use cached files only
+            )
+            print("✓ Loaded from cache")
+        except Exception:
+            print("Model not in cache, downloading...")
+            self.pipe = MarigoldDepthPipeline.from_pretrained(
+                model_repo,
+                torch_dtype=torch.float16 if self.device.type == "cuda" else torch.float32,
+            )
+        
         self.pipe.to(self.device)
 
         print("✓ Marigold model loaded successfully!")
@@ -168,12 +175,13 @@ class MarigoldDepthEstimator(BaseDepthEstimator):
         else:
             depth_map = np.array(depth_tensor).squeeze()
 
-        # Invert: 1/depth so closer objects have higher values
-        # Add small epsilon to avoid division by zero
-        epsilon = 1e-6
-        depth_map = 1.0 / (depth_map + epsilon)
+        # Marigold outputs metric depth (smaller values = closer objects)
+        # Invert so that closer objects have higher values (consistent with other models)
+        # Use max - depth instead of 1/depth to avoid extreme values
+        depth_map = depth_map.max() - depth_map
 
-        # Normalize to enhance brightness for closer objects
+        # Normalize to [0, 1] range
+        epsilon = 1e-6
         depth_min = depth_map.min()
         depth_max = depth_map.max()
         depth_map = (depth_map - depth_min) / (depth_max - depth_min + epsilon)
