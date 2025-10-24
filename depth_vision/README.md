@@ -29,8 +29,9 @@ Monocular depth estimation using multiple state-of-the-art models:
 - `lcm` - Fast diffusion model with Latent Consistency, ~2GB (recommended)
 - `base` - Standard diffusion model (slower but highly accurate), ~2GB
 
-Configuration	Quality	Speed	Use Case
-ensemble=1, steps=10	Basic	~17s	Fast preview
-ensemble=1, steps=50	Good	~70s	Single prediction, full quality
-ensemble=5, steps=50	Best	~6min	Production, highest accuracy
-ensemble=10, steps=50	Maximum	~12min	Research, best possible quality
+| Configuration           | Quality  | Speed  | Use Case                        |
+|------------------------|----------|--------|---------------------------------|
+| ensemble=1, steps=10    | Basic    | ~17s   | Fast preview                    |
+| ensemble=1, steps=50    | Good     | ~70s   | Single prediction, full quality |
+| ensemble=5, steps=50    | Best     | ~6min  | Production, highest accuracy    |
+| ensemble=10, steps=50   | Maximum  | ~12min | Research, best possible quality |
