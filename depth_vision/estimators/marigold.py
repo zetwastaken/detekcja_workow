@@ -11,6 +11,7 @@ from typing import Dict, Any
 from diffusers import MarigoldDepthPipeline
 from ..base import BaseDepthEstimator
 
+
 class MarigoldDepthEstimator(BaseDepthEstimator):
     """
     Marigold depth estimator using diffusion models.
@@ -104,17 +105,21 @@ class MarigoldDepthEstimator(BaseDepthEstimator):
         try:
             self.pipe = MarigoldDepthPipeline.from_pretrained(
                 model_repo,
-                torch_dtype=torch.float16 if self.device.type == "cuda" else torch.float32,
+                torch_dtype=(
+                    torch.float16 if self.device.type == "cuda" else torch.float32
+                ),
                 local_files_only=True,  # Use cached files only
             )
             print("✓ Loaded from cache")
-        except Exception:
-            print("Model not in cache, downloading...")
+        except (OSError, ValueError) as e:
+            print(f"Model not in cache ({e.__class__.__name__}), downloading...")
             self.pipe = MarigoldDepthPipeline.from_pretrained(
                 model_repo,
-                torch_dtype=torch.float16 if self.device.type == "cuda" else torch.float32,
+                torch_dtype=(
+                    torch.float16 if self.device.type == "cuda" else torch.float32
+                ),
             )
-        
+
         self.pipe.to(self.device)
 
         print("✓ Marigold model loaded successfully!")
