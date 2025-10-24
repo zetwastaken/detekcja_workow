@@ -3,18 +3,19 @@ Main application - Bag Detection with Depth Estimation
 Demonstrates the flexible multi-model depth estimation framework.
 """
 
+import sys
+from pathlib import Path
+
+# Add parent directory to path to allow imports when running as script
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# pylint: disable=wrong-import-position
 import cv2
 import numpy as np
-from pathlib import Path
 from typing import Dict, Tuple, Optional, Any
-
-# New extensible API
-from depth_vision import (
-    create_depth_estimator,
-    DepthEstimatorFactory,
-    BaseDepthEstimator,
-    visualize_depth,
-)
+from depth_vision.factory import create_depth_estimator, DepthEstimatorFactory
+from depth_vision.base import BaseDepthEstimator
+from depth_vision.utils import visualize_depth
 
 
 def initialize_estimator(estimator_type: str = "midas", **config) -> BaseDepthEstimator:
@@ -239,7 +240,7 @@ def main(estimator_type: str = "midas", **estimator_config):
     print("=" * 70)
 
     # Configuration
-    image_path = "data/worki_1.jpg"
+    image_path = str(Path(__file__).parent.parent / "data" / "worki_1.jpg")
 
     # Execute pipeline with specified estimator
     estimator = initialize_estimator(estimator_type, **estimator_config)
@@ -327,15 +328,15 @@ def process_multiple_images(
 
 
 if __name__ == "__main__":
-    # Example 1: Run with default MiDaS DPT_Large
-    # depth_map = main("midas", model_type="DPT_Large")
+    depth_map = main("midas", model_type="DPT_Large")
 
-    # depth_map_2 = main("depth_anything", model_size="large")
+    depth_map_2 = main("depth_anything", model_size="large")
 
     depth_map_3 = main("zoedepth", model_type="NK")
 
-    # Example 2: Run with different MiDaS model
-    # depth_map = main("midas", model_type="DPT_Hybrid")
+    depth_map_4 = main(
+        "marigold", model_variant="base", num_inference_steps=50, ensemble_size=1
+    )  # +/-1 min per ensemble for GTX 1070 TI
 
     # Example 3: Process multiple images
     # images = ["data/worki_1.jpg", "data/worki_2.jpg"]

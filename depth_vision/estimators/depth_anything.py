@@ -8,7 +8,6 @@ import cv2
 import numpy as np
 from typing import Dict, Any
 from transformers import AutoImageProcessor, AutoModelForDepthEstimation
-
 from ..base import BaseDepthEstimator
 
 

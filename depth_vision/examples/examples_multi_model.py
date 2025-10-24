@@ -160,7 +160,7 @@ def example_5_zoedepth():
 
 
 def example_6_compare_models():
-    """Example 6: Compare MiDaS vs Depth Anything vs ZoeDepth"""
+    """Example 6: Compare MiDaS vs Depth Anything vs ZoeDepth vs Marigold"""
     print("\n" + "=" * 70)
     print("Example 6: Compare Different Depth Estimators")
     print("=" * 70)
@@ -171,6 +171,10 @@ def example_6_compare_models():
         {"type": "midas", "config": {"model_type": "DPT_Hybrid"}},
         {"type": "depth_anything", "config": {"model_size": "small"}},
         {"type": "zoedepth", "config": {"model_type": "NK"}},
+        {
+            "type": "marigold",
+            "config": {"model_variant": "lcm", "num_inference_steps": 4},
+        },
     ]
 
     for model_cfg in models_config:
@@ -273,16 +277,17 @@ def example_7_batch_processing():
 def example_8_future_models():
     """Example 9: How to use future depth estimators"""
     print("\n" + "=" * 70)
-    print("Example 9: Using Future Depth Estimators")
+    print("Example 9: Using Additional Depth Estimators")
     print("=" * 70)
 
-    print("\nOnce implemented, you'll be able to use them like this:")
+    print("\nMarigold (diffusion-based, high quality):")
+    print(
+        'estimator = create_depth_estimator("marigold", model_variant="lcm", num_inference_steps=4)'
+    )
 
-    print("\n# Marigold:")
-    print('estimator = create_depth_estimator("marigold", num_steps=10)')
-
-    print("\n# DepthPro:")
-    print('estimator = create_depth_estimator("depthpro")')
+    print("\nPotential future models:")
+    print('# DepthPro: estimator = create_depth_estimator("depthpro")')
+    print('# Metric3D: estimator = create_depth_estimator("metric3d")')
 
     print("\nAll estimators share the same interface:")
     print("depth_map = estimator.estimate(image)")
