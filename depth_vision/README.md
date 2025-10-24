@@ -197,7 +197,7 @@ depth_vision/
 - GPU acceleration is automatically used if CUDA is available
 - Output depth maps:
   - MiDaS & Depth Anything: inverse depth (higher values = closer objects)
-  - ZoeDepth: metric depth in meters
+  - ZoeDepth: inverted metric depth (higher values = closer objects)
 
 ## Examples
 
