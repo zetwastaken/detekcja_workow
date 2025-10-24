@@ -3,13 +3,16 @@ Depth Anything estimator implementation.
 Uses the Depth Anything V2 model from HuggingFace.
 """
 
+import os
 import torch
 import cv2
 import numpy as np
 from typing import Dict, Any
 from transformers import AutoImageProcessor, AutoModelForDepthEstimation
-
 from ..base import BaseDepthEstimator
+
+# Enable parallel downloads for faster model downloads
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 
 
 class DepthAnythingEstimator(BaseDepthEstimator):

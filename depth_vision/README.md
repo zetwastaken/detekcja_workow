@@ -4,6 +4,7 @@ Monocular depth estimation using multiple state-of-the-art models:
 - **MiDaS** - Intel's robust depth estimation model
 - **Depth Anything V2** - Latest high-performance depth estimator
 - **ZoeDepth** - High-quality metric depth estimation
+- **Marigold** - Diffusion-based depth estimation with fine details
 
 ## Setup
 
@@ -37,6 +38,10 @@ pip install -r requirements.txt
 - `N` - Indoor scenes (NYU dataset), ~350MB
 - `K` - Outdoor/driving scenes (KITTI dataset), ~350MB
 
+### Marigold
+- `lcm` - Fast diffusion model with Latent Consistency, ~2GB (recommended)
+- `base` - Standard diffusion model (slower but highly accurate), ~2GB
+
 ## Usage
 
 ### Using the Factory Pattern (Recommended)
@@ -54,6 +59,9 @@ estimator = create_depth_estimator("depth_anything", model_size="small")
 # Or create a ZoeDepth estimator
 estimator = create_depth_estimator("zoedepth", model_type="NK")
 
+# Or create a Marigold estimator (diffusion-based)
+estimator = create_depth_estimator("marigold", model_variant="lcm", num_inference_steps=4)
+
 # Process image
 image = cv2.imread("input.jpg")
 depth_map = estimator.estimate(image)
@@ -66,7 +74,12 @@ cv2.imwrite("depth_output.png", colored_depth)
 ### Direct Model Usage
 
 ```python
-from depth_vision.estimators import MiDaSDepthEstimator, DepthAnythingEstimator, ZoeDepthEstimator
+from depth_vision.estimators import (
+    MiDaSDepthEstimator,
+    DepthAnythingEstimator,
+    ZoeDepthEstimator,
+    MarigoldDepthEstimator,
+)
 
 # MiDaS
 midas = MiDaSDepthEstimator(model_type="DPT_Hybrid")
@@ -79,6 +92,10 @@ depth = depth_anything.estimate(image)
 # ZoeDepth
 zoedepth = ZoeDepthEstimator(model_type="NK")
 depth = zoedepth.estimate(image)
+
+# Marigold (diffusion-based, high quality)
+marigold = MarigoldDepthEstimator(model_variant="lcm", num_inference_steps=4)
+depth = marigold.estimate(image)
 ```
 
 ### Comparing Multiple Models
@@ -94,6 +111,7 @@ models = [
     ("midas", {"model_type": "DPT_Hybrid"}),
     ("depth_anything", {"model_size": "small"}),
     ("zoedepth", {"model_type": "NK"}),
+    ("marigold", {"model_variant": "lcm", "num_inference_steps": 4}),
 ]
 
 for model_name, config in models:
@@ -170,7 +188,8 @@ python -m depth_vision.midas -i input.jpg -o depth_output.png
 - PyTorch 2.0+
 - OpenCV 4.8+
 - NumPy 1.24+
-- transformers 4.35+ (for Depth Anything)
+- transformers 4.35+ (for Depth Anything and Marigold)
+- diffusers 0.25+ (for Marigold)
 - timm 0.9+ (for vision models)
 
 ## Project Structure
@@ -186,6 +205,7 @@ depth_vision/
     midas.py            - MiDaS implementation
     depth_anything.py   - Depth Anything V2 implementation
     zoedepth.py         - ZoeDepth implementation
+    marigold.py         - Marigold diffusion-based implementation
 ```
 
 ## Notes
@@ -194,10 +214,12 @@ depth_vision/
   - MiDaS DPT_Large: ~1.3GB
   - Depth Anything Small: ~100MB
   - ZoeDepth: ~350MB
+  - Marigold: ~2GB
 - GPU acceleration is automatically used if CUDA is available
 - Output depth maps:
   - MiDaS & Depth Anything: inverse depth (higher values = closer objects)
   - ZoeDepth: inverted metric depth (higher values = closer objects)
+  - Marigold: inverted and normalized depth (higher values = closer objects, brighter)
 
 ## Examples
 
