@@ -328,9 +328,11 @@ def process_multiple_images(
 
 if __name__ == "__main__":
     # Example 1: Run with default MiDaS DPT_Large
-    depth_map = main("midas", model_type="DPT_Large")
+    # depth_map = main("midas", model_type="DPT_Large")
 
-    depth_map_2 = main("depth_anything", model_size="large")
+    # depth_map_2 = main("depth_anything", model_size="large")
+
+    depth_map_3 = main("zoedepth", model_type="NK")
 
     # Example 2: Run with different MiDaS model
     # depth_map = main("midas", model_type="DPT_Hybrid")
@@ -340,6 +342,5 @@ if __name__ == "__main__":
     # depth_maps = process_multiple_images(images, "midas", model_type="DPT_Hybrid")
 
     # Example 4 (future): Use different estimator
-    # depth_map = main("zoe", model_size="large")
 
     # depth_maps = process_multiple_images(images)

@@ -3,6 +3,7 @@
 Monocular depth estimation using multiple state-of-the-art models:
 - **MiDaS** - Intel's robust depth estimation model
 - **Depth Anything V2** - Latest high-performance depth estimator
+- **ZoeDepth** - High-quality metric depth estimation
 
 ## Setup
 
@@ -31,6 +32,11 @@ pip install -r requirements.txt
 - `base` - Balanced, ~400MB  
 - `large` - Highest accuracy, ~1.3GB
 
+### ZoeDepth
+- `NK` - General purpose (indoor + outdoor), ~350MB (recommended)
+- `N` - Indoor scenes (NYU dataset), ~350MB
+- `K` - Outdoor/driving scenes (KITTI dataset), ~350MB
+
 ## Usage
 
 ### Using the Factory Pattern (Recommended)
@@ -45,6 +51,9 @@ estimator = create_depth_estimator("midas", model_type="DPT_Hybrid")
 # Or create a Depth Anything estimator
 estimator = create_depth_estimator("depth_anything", model_size="small")
 
+# Or create a ZoeDepth estimator
+estimator = create_depth_estimator("zoedepth", model_type="NK")
+
 # Process image
 image = cv2.imread("input.jpg")
 depth_map = estimator.estimate(image)
@@ -57,7 +66,7 @@ cv2.imwrite("depth_output.png", colored_depth)
 ### Direct Model Usage
 
 ```python
-from depth_vision.estimators import MiDaSDepthEstimator, DepthAnythingEstimator
+from depth_vision.estimators import MiDaSDepthEstimator, DepthAnythingEstimator, ZoeDepthEstimator
 
 # MiDaS
 midas = MiDaSDepthEstimator(model_type="DPT_Hybrid")
@@ -66,6 +75,10 @@ depth = midas.estimate(image)
 # Depth Anything
 depth_anything = DepthAnythingEstimator(model_size="base")
 depth = depth_anything.estimate(image)
+
+# ZoeDepth
+zoedepth = ZoeDepthEstimator(model_type="NK")
+depth = zoedepth.estimate(image)
 ```
 
 ### Comparing Multiple Models
@@ -80,6 +93,7 @@ image = cv2.imread("input.jpg")
 models = [
     ("midas", {"model_type": "DPT_Hybrid"}),
     ("depth_anything", {"model_size": "small"}),
+    ("zoedepth", {"model_type": "NK"}),
 ]
 
 for model_name, config in models:
@@ -171,6 +185,7 @@ depth_vision/
     __init__.py
     midas.py            - MiDaS implementation
     depth_anything.py   - Depth Anything V2 implementation
+    zoedepth.py         - ZoeDepth implementation
 ```
 
 ## Notes
@@ -178,8 +193,11 @@ depth_vision/
 - First run will download models from HuggingFace/PyTorch Hub
   - MiDaS DPT_Large: ~1.3GB
   - Depth Anything Small: ~100MB
+  - ZoeDepth: ~350MB
 - GPU acceleration is automatically used if CUDA is available
-- Output depth maps are inverse depth (higher values = closer objects)
+- Output depth maps:
+  - MiDaS & Depth Anything: inverse depth (higher values = closer objects)
+  - ZoeDepth: metric depth in meters
 
 ## Examples
 

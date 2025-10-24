@@ -7,6 +7,7 @@ from typing import Dict, Type, Optional
 from .base import BaseDepthEstimator
 from .estimators.midas import MiDaSDepthEstimator
 from .estimators.depth_anything import DepthAnythingEstimator
+from .estimators.zoedepth import ZoeDepthEstimator
 
 
 class DepthEstimatorFactory:
@@ -24,8 +25,8 @@ class DepthEstimatorFactory:
     _estimators: Dict[str, Type[BaseDepthEstimator]] = {
         "midas": MiDaSDepthEstimator,
         "depth_anything": DepthAnythingEstimator,
+        "zoedepth": ZoeDepthEstimator,
         # Add more estimators here as they are implemented:
-        # "zoe": ZoeDepthEstimator,
         # "marigold": MarigoldEstimator,
     }
 

@@ -86,6 +86,12 @@ def example_3_list_available():
     for model, specs in DepthAnythingEstimator.SUPPORTED_MODELS.items():
         print(f"  - {model}: {specs}")
 
+    print("\nSupported ZoeDepth models:")
+    from depth_vision.estimators.zoedepth import ZoeDepthEstimator
+
+    for model, specs in ZoeDepthEstimator.SUPPORTED_MODELS.items():
+        print(f"  - {model}: {specs}")
+
 
 def example_4_depth_anything():
     """Example 4: Using Depth Anything V2"""
@@ -120,10 +126,43 @@ def example_4_depth_anything():
             break
 
 
-def example_5_compare_models():
-    """Example 5: Compare MiDaS vs Depth Anything"""
+def example_5_zoedepth():
+    """Example 5: Using ZoeDepth"""
     print("\n" + "=" * 70)
-    print("Example 5: Compare Different Depth Estimators")
+    print("Example 5: ZoeDepth Usage")
+    print("=" * 70)
+
+    image = cv2.imread("data/worki_1.jpg")
+
+    # Try different model types
+    for model_type in ["NK", "N", "K"]:
+        print(f"\nTesting ZoeDepth ({model_type})...")
+        try:
+            estimator = create_depth_estimator("zoedepth", model_type=model_type)
+
+            depth_map = estimator.estimate(image)
+
+            # Save visualization
+            colored = visualize_depth(depth_map)
+            output_path = f"output/zoedepth_{model_type}.png"
+            cv2.imwrite(output_path, colored)
+            print(f"  ✓ Saved: {output_path}")
+            print(f"  Depth range: [{depth_map.min():.2f}, {depth_map.max():.2f}]")
+
+            # Get model info
+            info = estimator.get_model_info()
+            print(f"  Model: {info['name']} ({info['variant']})")
+            print(f"  Device: {info['device']}")
+            print(f"  Output: {info.get('output_type', 'relative depth')}")
+        except (ValueError, RuntimeError, OSError, ImportError) as e:
+            print(f"  ⚠️  Error loading model: {e}")
+            break
+
+
+def example_6_compare_models():
+    """Example 6: Compare MiDaS vs Depth Anything vs ZoeDepth"""
+    print("\n" + "=" * 70)
+    print("Example 6: Compare Different Depth Estimators")
     print("=" * 70)
 
     image = cv2.imread("data/worki_1.jpg")
@@ -131,6 +170,7 @@ def example_5_compare_models():
     models_config = [
         {"type": "midas", "config": {"model_type": "DPT_Hybrid"}},
         {"type": "depth_anything", "config": {"model_size": "small"}},
+        {"type": "zoedepth", "config": {"model_type": "NK"}},
     ]
 
     for model_cfg in models_config:
@@ -158,9 +198,9 @@ def example_5_compare_models():
 
 
 def example_6_custom_estimator():
-    """Example 6: How to create a custom depth estimator"""
+    """Example 7: How to create a custom depth estimator"""
     print("\n" + "=" * 70)
-    print("Example 6: Custom Depth Estimator Template")
+    print("Example 7: Custom Depth Estimator Template")
     print("=" * 70)
 
     # This is how you would create a custom estimator
@@ -198,9 +238,9 @@ def example_6_custom_estimator():
 
 
 def example_7_batch_processing():
-    """Example 7: Efficient batch processing"""
+    """Example 8: Efficient batch processing"""
     print("\n" + "=" * 70)
-    print("Example 7: Batch Processing Multiple Images")
+    print("Example 8: Batch Processing Multiple Images")
     print("=" * 70)
 
     # List of images to process
@@ -231,18 +271,18 @@ def example_7_batch_processing():
 
 
 def example_8_future_models():
-    """Example 8: How to use future depth estimators"""
+    """Example 9: How to use future depth estimators"""
     print("\n" + "=" * 70)
-    print("Example 8: Using Future Depth Estimators")
+    print("Example 9: Using Future Depth Estimators")
     print("=" * 70)
 
     print("\nOnce implemented, you'll be able to use them like this:")
 
-    print("\n# ZoeDepth:")
-    print('estimator = create_depth_estimator("zoe", model_type="NK")')
-
     print("\n# Marigold:")
     print('estimator = create_depth_estimator("marigold", num_steps=10)')
+
+    print("\n# DepthPro:")
+    print('estimator = create_depth_estimator("depthpro")')
 
     print("\nAll estimators share the same interface:")
     print("depth_map = estimator.estimate(image)")
@@ -262,7 +302,8 @@ if __name__ == "__main__":
     # example_2_compare_models()
     example_3_list_available()
     # example_4_depth_anything()
-    # example_5_compare_models()
+    # example_5_zoedepth()
+    # example_6_compare_models()
     example_6_custom_estimator()
     # example_7_batch_processing()
     example_8_future_models()
