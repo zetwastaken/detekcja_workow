@@ -7,6 +7,7 @@ import os
 import argparse
 import cv2 as cv
 
+
 def tilling(path: str, tile_size: int = 640, overlap: int = 128):
     """
     Tiles all images found in specified directory into smaller patches with a defined overlap.

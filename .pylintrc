@@ -33,6 +33,7 @@ disable=
     # Errors (keeping most, but disabling cv2 false positives)
     E0401,  # import-error (using .venv, packages are installed)
     E1101,  # no-member (cv2 members are dynamically loaded, causes false positives)
+    R0914 # Too many local variables (24/20) (too-many-locals)
 
 [REPORTS]
 # Set the output format
