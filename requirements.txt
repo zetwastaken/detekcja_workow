@@ -13,6 +13,11 @@ diffusers>=0.25.0
 accelerate
 hf-transfer
 scipy>=1.10.0  # Required for Marigold ensemble predictions
+huggingface-hub>=0.20.0  # Required for Depth Pro model download
+
+# Depth Pro (Apple ML Research)
+# Install separately with: pip install git+https://github.com/apple/ml-depth-pro.git
+# Model will be automatically downloaded from HuggingFace on first use
 
 # Optional: Development tools (uncomment if needed)
 # matplotlib>=3.7.0

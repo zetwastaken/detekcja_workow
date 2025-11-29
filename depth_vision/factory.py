@@ -9,6 +9,7 @@ from .estimators.midas import MiDaSDepthEstimator
 from .estimators.depth_anything import DepthAnythingEstimator
 from .estimators.zoedepth import ZoeDepthEstimator
 from .estimators.marigold import MarigoldDepthEstimator
+from .estimators.depth_pro import DepthProEstimator
 
 
 class DepthEstimatorFactory:
@@ -28,6 +29,7 @@ class DepthEstimatorFactory:
         "depth_anything": DepthAnythingEstimator,
         "zoedepth": ZoeDepthEstimator,
         "marigold": MarigoldDepthEstimator,
+        "depth_pro": DepthProEstimator,
     }
 
     @classmethod
