@@ -8,7 +8,7 @@ import argparse
 import cv2 as cv
 
 
-def tilling(path: str, tile_size: int = 640, overlap: int = 128):
+def tilling(path: str, tile_size: int = 640, overlap: int = 80):
     """
     Tiles all images found in specified directory into smaller patches with a defined overlap.
     Results are saved in 'img_tiles' folder.
@@ -20,7 +20,7 @@ def tilling(path: str, tile_size: int = 640, overlap: int = 128):
     "type path: str
     :param tile_size: Target size of each tile, tile_size x tile_size. Defaults to 640.
     "type tile_size: int
-    :param overlap: The size of the overlap between neighbouring tiles in px. Defaults to 128.
+    :param overlap: The size of the overlap between neighbouring tiles in px. Defaults to 80.
     "type overlap: int
     :return: none
     """
