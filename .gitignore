@@ -5,6 +5,8 @@
 
 # Project artifacts
 output/
+runs/
+datasets/
 
 # Python cache and bytecode
 __pycache__/

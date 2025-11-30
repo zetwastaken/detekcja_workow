@@ -1,6 +1,6 @@
 # YOLOv8 Dataset Configuration
 # Dataset path (absolute)
-path: s:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/datasets/dataset_yolov8_V1
+path: /home/zet/Programowanie/worki/detekcja_workow/datasets/dataset_yolov8_V1
 
 # Train and validation image paths (relative to 'path')
 train: train/images

@@ -1,11 +1,26 @@
 """
 YOLOv8 Inference Script - Testing trained model on new images
 """
-from ultralytics import YOLO
 from pathlib import Path
 
-# Load your trained model
-model_path = 'runs/segment/yolov8_sandbag_seg_v2/weights/best.pt'
+from ultralytics import YOLO
+
+root_dir = Path(__file__).resolve().parents[2]
+project_dir = Path(__file__).resolve().parents[1]
+runs_dir = root_dir / 'runs' / 'segment'
+
+# Load your trained model (prefer v2 as requested)
+preferred_run = runs_dir / 'yolov8_sandbag_seg_v2' / 'weights' / 'best.pt'
+
+if preferred_run.exists():
+    model_path = preferred_run
+else:
+    # Fallback: pick the newest available run/weights
+    best_weights = sorted(runs_dir.glob('*/weights/best.pt'), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not best_weights:
+        raise FileNotFoundError(f"No weights found under {runs_dir}")
+    model_path = best_weights[0]
+
 model = YOLO(model_path)
 
 # Path to image(s) you want to test
@@ -18,7 +33,7 @@ model = YOLO(model_path)
 
 # test_image = 'S:/MyFiles/Studia/Magisterskie/Sem2/Worki/worki_ok/dobre_do_wykorzystania/DJI_0398_2pD.JPG'  # Whole image
 
-base_path = '/home/zuza/Maciek/Sandbags/detekcja_workow/tiling/all_V1_640_80'
+base_path = project_dir / 'tiling' / 'all_V1_640_80'
 test_images = [
     'DJI_0398_2pD_R002_C004.jpg',
     'DJI_0480_3pD_R003_C002.jpg',
@@ -32,7 +47,7 @@ test_images = [
     'IMG_2085_4pK_R004_C008.jpg',
     'worki_1_R002_C004.jpg',
 ]
-test_image = [f"{base_path}/{img}" for img in test_images]
+test_image = [str(base_path / img) for img in test_images]
 
 # Run inference
 results = model.predict(

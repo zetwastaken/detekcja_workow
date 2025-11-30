@@ -1,13 +1,18 @@
+from pathlib import Path
+
 from ultralytics import YOLO
 
 model = YOLO('yolov8n-seg.pt')
 
+project_root = Path(__file__).resolve().parent.parent
+data_yaml = project_root / 'datasets' / 'dataset_yolov8_V1' / 'data.yaml'
+
 results = model.train(
-    data='./datasets/dataset_yolov8_V1/data.yaml',
-    epochs=1500,
+    data=str(data_yaml),
+    epochs=100,
     patience=150,
     imgsz=640,
-    batch=24,
+    batch=32,
     lr0=0.01,
     lrf=0.01,
     task='segment',
@@ -16,7 +21,7 @@ results = model.train(
     device=0,
     cos_lr=True,
     optimizer='auto',
-    name='yolov8_sandbag_seg_v5',
+    name=f'yolov8_sandbag_seg_{__import__("datetime").datetime.now().strftime("%Y%m%d_%H%M%S")}',
     exist_ok=True,
     save=True,
     save_period=10,
