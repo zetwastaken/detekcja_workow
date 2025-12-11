@@ -3,9 +3,10 @@ YOLOv8 Inference Script - Testing trained model on new images
 """
 from ultralytics import YOLO
 from pathlib import Path
+import torch
 
 # Load your trained model
-model_path = 'runs/segment/yolov8_sandbag_seg_v2/weights/best.pt'
+model_path = 'runs/segment/yolov8_sandbag_seg_v5/weights/best.pt'
 model = YOLO(model_path)
 
 # Path to image(s) you want to test
@@ -16,9 +17,10 @@ model = YOLO(model_path)
 # - URL: 'https://example.com/image.jpg'
 # test_image = 'S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/tiling/all_V1_640_80'  # CHANGE THIS
 
-# test_image = 'S:/MyFiles/Studia/Magisterskie/Sem2/Worki/worki_ok/dobre_do_wykorzystania/DJI_0398_2pD.JPG'  # Whole image
+# test_image = 'S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/data/IMG_2015_1pK.JPG'  # Whole image
+# test_image = 'S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/data/' # Whole image folder
 
-base_path = '/home/zuza/Maciek/Sandbags/detekcja_workow/tiling/all_V1_640_80'
+base_path = 'S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/tiling/all_V1_640_80'
 test_images = [
     'DJI_0398_2pD_R002_C004.jpg',
     'DJI_0480_3pD_R003_C002.jpg',
@@ -40,12 +42,15 @@ results = model.predict(
     save=True,              # Save results to runs/segment/predict/
     save_txt=True,          # Save labels as .txt files
     save_conf=True,         # Save confidence scores
-    conf=0.25,              # Confidence threshold (0-1)
+    conf=0.4,              # Confidence threshold (0-1)
     iou=0.7,                # IoU threshold for NMS
     show_labels=True,       # Show class labels
     show_conf=True,         # Show confidence scores
     show_boxes=True,        # Show bounding boxes
     line_width=2,           # Line width for boxes and masks
+    stream=True,            # Process images one by one to save memory
+    device='cpu',           # Force CPU inference
+    # imgsz=640,              # Resize image to 640px (smaller = less RAM usage)
 )
 
 # Print results
@@ -72,5 +77,10 @@ for i, result in enumerate(results):
         print("No sandbags detected")
     
     print(f"\nResults saved to: {result.save_dir}")
+    
+    # Free up memory after processing each image
+    del result
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 print("\n✅ Inference completed!")
