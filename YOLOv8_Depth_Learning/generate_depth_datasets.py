@@ -7,12 +7,10 @@ This script:
 4. Creates separate YOLOv8 datasets for each depth model
 """
 
-import os
 import shutil
 import cv2
-import numpy as np
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 from tqdm import tqdm
 
 # Add project root to path
@@ -21,8 +19,9 @@ import sys
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from depth_vision.factory import DepthEstimatorFactory
 from depth_vision.utils import visualize_depth
+from utils.image_utils import create_depth_estimator
+from utils.tiling import tile_image_with_names
 
 
 # All depth model configurations to test
@@ -70,51 +69,6 @@ def get_selected_filenames() -> Tuple[set, set]:
     return train_files, valid_files
 
 
-def tile_image(
-    image: np.ndarray, base_name: str, tile_size: int = 640, overlap: int = 80
-) -> Dict[str, np.ndarray]:
-    """
-    Tile an image into smaller patches with overlap.
-    Returns dict mapping tile filename to tile image array.
-    """
-    stride = tile_size - overlap
-    height, width = image.shape[:2]
-    tiles = {}
-
-    # Generate x coordinates
-    x_starts = []
-    x = 0
-    while x <= width - tile_size:
-        x_starts.append(x)
-        x += stride
-
-    if x_starts and x_starts[-1] < width - tile_size:
-        x_starts.append(width - tile_size)
-    elif not x_starts and width >= tile_size:
-        x_starts.append(0)
-
-    # Generate y coordinates
-    y_starts = []
-    y = 0
-    while y <= height - tile_size:
-        y_starts.append(y)
-        y += stride
-
-    if y_starts and y_starts[-1] < height - tile_size:
-        y_starts.append(height - tile_size)
-    elif not y_starts and height >= tile_size:
-        y_starts.append(0)
-
-    # Extract tiles
-    for i, y_start in enumerate(y_starts):
-        for j, x_start in enumerate(x_starts):
-            tile = image[y_start : y_start + tile_size, x_start : x_start + tile_size]
-            tile_filename = f"{base_name}_R{i:03d}_C{j:03d}.jpg"
-            tiles[tile_filename] = tile
-
-    return tiles
-
-
 def process_single_model(
     model_name: str,
     model_config: dict,
@@ -148,7 +102,7 @@ def process_single_model(
     estimator_type = model_config.pop("type")
     print(f"Initializing {estimator_type} estimator...")
     try:
-        estimator = DepthEstimatorFactory.create(estimator_type, **model_config)
+        estimator = create_depth_estimator(estimator_type, **model_config)
     except Exception as e:
         print(f"ERROR: Failed to create estimator: {e}")
         return None
@@ -186,7 +140,7 @@ def process_single_model(
 
         # Tile the depth map
         base_name = img_path.stem
-        tiles = tile_image(depth_colored, base_name, TILE_SIZE, OVERLAP)
+        tiles = tile_image_with_names(depth_colored, base_name, TILE_SIZE, OVERLAP)
         all_tiles.update(tiles)
 
     print(f"Generated {len(all_tiles)} tiles total")

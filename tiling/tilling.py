@@ -3,9 +3,20 @@ Python script for automatic tiling all images within a specified
 directory into smaller, overlapping tiles.
 """
 
-import os
 import argparse
+import os
+from pathlib import Path
+
 import cv2 as cv
+
+# Add project root so we can reuse shared tiling helpers
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from YOLOv8_Depth_Learning.utils.tiling import tile_image_with_names
 
 
 def tilling(path: str, tile_size: int = 640, overlap: int = 80):
@@ -24,70 +35,38 @@ def tilling(path: str, tile_size: int = 640, overlap: int = 80):
     "type overlap: int
     :return: none
     """
-    # stride = step size for tiling
     stride = tile_size - overlap
     if stride <= 0:
-        print("Error: overlap must be less than tile_size:")
+        print("Error: overlap must be less than tile_size.")
         return
 
-    # Output directory
     output_dir = "img_tiles"
     os.makedirs(output_dir, exist_ok=True)
     print(f"Output directory: {output_dir}")
 
-    # supported image formats
     img_formats = (".jpg", ".jpeg", ".png", ".bmp", ".tiff")
 
-    # iterate through images in folder
     for filename in os.listdir(path):
-        if filename.lower().endswith(img_formats):
-            img_path = os.path.join(path, filename)
-            # read image
-            img = cv.imread(img_path)
-            if img is None:
-                print(f"Error reading image: {filename}. Skipping.")
-                continue
+        if not filename.lower().endswith(img_formats):
+            continue
+
+        img_path = os.path.join(path, filename)
+        img = cv.imread(img_path)
+        if img is None:
+            print(f"Error reading image: {filename}. Skipping.")
+            continue
+
         height, width = img.shape[:2]
-        print(f"Processing image: {filename} (width: {width}, height {height}")
+        print(f"Processing image: {filename} (width: {width}, height: {height})")
 
-        # genereate x coordinates
-        x_starts = []
-        x = 0
-        while x <= width - tile_size:
-            x_starts.append(x)
-            x += stride
+        base_name, _ = os.path.splitext(filename)
+        tiles = tile_image_with_names(img, base_name, tile_size, overlap)
 
-        # add last tile if needed
-        if x_starts and x_starts[-1] < width - tile_size:
-            x_starts.append(width - tile_size)
-        elif not x_starts and width >= tile_size:
-            x_starts.append(0)
+        for tile_name, tile_img in tiles.items():
+            output_filepath = os.path.join(output_dir, tile_name)
+            cv.imwrite(output_filepath, tile_img)
 
-        # generate y coordinates
-        y_starts = []
-        y = 0
-        while y <= height - tile_size:
-            y_starts.append(y)
-            y += stride
-
-        if y_starts and y_starts[-1] < height - tile_size:
-            y_starts.append(height - tile_size)
-        elif not y_starts and height >= tile_size:
-            y_starts.append(0)
-
-        # extract and save
-        tile_count = 0
-        for i, y_start in enumerate(y_starts):
-            for j, x_start in enumerate(x_starts):
-                tile = img[y_start : y_start + tile_size, x_start : x_start + tile_size]
-
-                base_name, _ = os.path.splitext(filename)
-                output_filename = f"{base_name}_R{i:03d}_C{j:03d}.jpg"
-                output_filepath = os.path.join(output_dir, output_filename)
-
-                cv.imwrite(output_filepath, tile)
-                tile_count += 1
-        print(f"Made {tile_count} tiles for image: {filename}.")
+        print(f"Made {len(tiles)} tiles for image: {filename}.")
 
 
 if __name__ == "__main__":

@@ -4,10 +4,8 @@ Uses Depth Anything Large (best performing depth model) to generate the depth ch
 Saves as 4-channel TIFF images for native Ultralytics multi-channel support.
 """
 
-import os
 import shutil
 import cv2
-import numpy as np
 from pathlib import Path
 from tqdm import tqdm
 
@@ -17,8 +15,7 @@ import sys
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from depth_vision.factory import DepthEstimatorFactory
-from depth_vision.utils import normalize_depth
+from utils.image_utils import create_depth_estimator, create_rgbd_image
 
 
 # Configuration
@@ -29,30 +26,6 @@ DEPTH_CONFIG = {"model_size": "large"}
 DATASETS_DIR = PROJECT_ROOT / "datasets"
 SOURCE_DATASET = DATASETS_DIR / "dataset_yolov8_V1"
 OUTPUT_DATASET = DATASETS_DIR / "dataset_rgbd"
-
-
-def create_rgbd_image(rgb_image: np.ndarray, depth_estimator) -> np.ndarray:
-    """
-    Create 4-channel RGBD image from RGB image.
-
-    Args:
-        rgb_image: BGR image (OpenCV format)
-        depth_estimator: Initialized depth estimator
-
-    Returns:
-        4-channel BGRD image (uint8)
-    """
-    # Generate depth map
-    depth_map = depth_estimator.estimate(rgb_image)
-
-    # Normalize depth to 0-255
-    depth_normalized = normalize_depth(depth_map)
-
-    # Stack RGB + Depth as 4th channel (BGRD)
-    # OpenCV reads as BGR, so result is BGRD
-    rgbd = np.dstack([rgb_image, depth_normalized])
-
-    return rgbd
 
 
 def generate_rgbd_dataset():
@@ -72,7 +45,7 @@ def generate_rgbd_dataset():
 
     # Initialize depth estimator
     print("\nInitializing Depth Anything Large estimator...")
-    estimator = DepthEstimatorFactory.create(DEPTH_MODEL, **DEPTH_CONFIG)
+    estimator = create_depth_estimator(DEPTH_MODEL, **DEPTH_CONFIG)
     print("Estimator ready!")
 
     # Process each split
