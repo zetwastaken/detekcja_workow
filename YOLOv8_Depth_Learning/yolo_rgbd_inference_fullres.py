@@ -152,10 +152,12 @@ def reassemble_predictions(
     tile_weights = np.ones((tile_size, tile_size), dtype=np.float32)
     
     # Apply distance-based weights to reduce edge artifacts
+    # Add 1 to distance to avoid zero weights at edges
     for i in range(tile_size):
         for j in range(tile_size):
             dist_from_edge = min(i, j, tile_size - 1 - i, tile_size - 1 - j)
-            tile_weights[i, j] = min(dist_from_edge / (OVERLAP / 2), 1.0)
+            normalized_dist = min((dist_from_edge + 1) / (OVERLAP / 2 + 1), 1.0)
+            tile_weights[i, j] = max(normalized_dist, 0.1)  # Minimum weight of 0.1
 
     # Blend tiles
     for y_start, x_start, tile in tiles_info:
@@ -189,21 +191,47 @@ def reassemble_predictions(
     return output.astype(np.uint8)
 
 
-def find_latest_rgbd_weights() -> Path:
-    """Find the latest RGBD model weights."""
-    candidates = sorted(
-        RUNS_DIR.glob("rgbd_**/weights/best.pt"),
+def find_model_weights(model_type: str = "auto") -> Path:
+    """
+    Find model weights.
+    
+    Args:
+        model_type: Type of model to find ("rgbd", "rgb", or "auto")
+                   "auto" tries RGBD first, falls back to RGB
+    
+    Returns:
+        Path to model weights
+    """
+    if model_type == "rgbd" or model_type == "auto":
+        # Try to find RGBD model
+        rgbd_candidates = sorted(
+            RUNS_DIR.glob("rgbd_**/weights/best.pt"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if rgbd_candidates:
+            return rgbd_candidates[0]
+        
+        if model_type == "rgbd":
+            raise FileNotFoundError(
+                f"No RGBD model weights found under {RUNS_DIR}. "
+                "Please train an RGBD model first using train_rgbd_model.py"
+            )
+    
+    # Fall back to RGB model or if explicitly requested
+    rgb_candidates = sorted(
+        RUNS_DIR.glob("yolov8_**/weights/best.pt"),
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
-
-    if not candidates:
+    
+    if not rgb_candidates:
         raise FileNotFoundError(
-            f"No RGBD model weights found under {RUNS_DIR}. "
-            "Please train an RGBD model first using train_rgbd_model.py"
+            f"No model weights found under {RUNS_DIR}. "
+            "Please train a model first."
         )
-
-    return candidates[0]
+    
+    return rgb_candidates[0]
 
 
 def main():
@@ -228,9 +256,10 @@ def main():
     image_files = sorted(image_files)
     print(f"Found {len(image_files)} images in {DATA_DIR}")
     
-    # Load RGBD model
-    weights_path = find_latest_rgbd_weights()
-    print(f"Loading RGBD model from: {weights_path}")
+    # Load model (try RGBD first, fall back to RGB)
+    weights_path = find_model_weights("auto")
+    model_type = "RGBD" if "rgbd" in weights_path.parent.parent.name.lower() else "RGB"
+    print(f"Loading {model_type} model from: {weights_path}")
     model = YOLO(weights_path)
     
     # Initialize depth estimator
@@ -266,9 +295,15 @@ def main():
             # Run predictions on tiles
             tile_predictions = []
             for tile_img, y_start, x_start in tiles:
+                # For RGB models, use only first 3 channels
+                if model_type == "RGB":
+                    model_input = tile_img[:, :, :3]
+                else:
+                    model_input = tile_img
+                
                 # Run YOLO prediction on this tile
                 results = model.predict(
-                    source=tile_img,
+                    source=model_input,
                     save=False,
                     verbose=False,
                     imgsz=TILE_SIZE,
