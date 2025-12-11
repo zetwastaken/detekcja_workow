@@ -1,5 +1,9 @@
 """
 Test script for tile reassembly function.
+
+Note: This test file contains duplicated implementations of tile_image and 
+reassemble_predictions functions to allow standalone testing without importing
+the main module (which has heavy dependencies like ultralytics).
 """
 
 import numpy as np

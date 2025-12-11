@@ -14,12 +14,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 from datetime import datetime
-import shutil
 
 import cv2
 import numpy as np
+import torch
 from ultralytics import YOLO
 from tqdm import tqdm
 
@@ -343,7 +343,6 @@ def main():
     # Cleanup GPU memory
     del estimator
     del model
-    import torch
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
