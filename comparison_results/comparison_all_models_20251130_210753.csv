@@ -1,0 +1,12 @@
+Model,Type,mAP50-95,mAP50,Precision,Recall,Best Epoch,Total Epochs,Run
+yolov8_sandbag_seg_20251130_203444,rgb,0.70096,0.90172,0.84137,0.80645,659,665,yolov8_sandbag_seg_20251130_203444
+yolov8_sandbag_seg_v2,rgb,0.68029,0.88998,0.87299,0.80624,257,300,yolov8_sandbag_seg_v2
+yolov8_sandbag_seg_v5,rgb,0.67219,0.90424,0.8938,0.79179,267,417,yolov8_sandbag_seg_v5
+yolov8_sandbag_seg_v1,rgb,0.60123,0.84577,0.83749,0.7478,20,20,yolov8_sandbag_seg_v1
+depth_anything_large,depth,0.27883,0.58716,0.67816,0.54378,452,500,depth_depth_anything_large_20251130_141257
+marigold_default,depth,0.13578,0.37173,0.54906,0.36778,418,500,depth_marigold_default_20251130_143610
+midas_DPT_Large,depth,0.10293,0.26936,0.4112,0.28152,290,500,depth_midas_DPT_Large_20251130_152254
+marigold_lcm,depth,0.0955,0.27391,0.39092,0.33138,391,500,depth_marigold_lcm_20251130_145930
+zoedepth_N,depth,0.09219,0.25443,0.37146,0.29636,373,500,depth_zoedepth_N_20251130_160935
+zoedepth_K,depth,0.08395,0.24991,0.32958,0.31378,377,500,depth_zoedepth_K_20251130_154616
+zoedepth_NK,depth,0.07888,0.22862,0.42478,0.24688,355,500,depth_zoedepth_NK_20251130_163255

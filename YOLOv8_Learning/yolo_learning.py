@@ -9,7 +9,7 @@ data_yaml = project_root / "datasets" / "dataset_yolov8_V1" / "data.yaml"
 
 results = model.train(
     data=str(data_yaml),
-    epochs=100,
+    epochs=1500,
     patience=150,
     imgsz=640,
     batch=32,
