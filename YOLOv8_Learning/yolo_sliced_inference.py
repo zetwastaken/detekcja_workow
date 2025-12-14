@@ -22,7 +22,7 @@ class YOLOv8SahiInference:
     def __init__(
         self,
         model_path: str,
-        confidence_threshold: float = 0.25,
+        confidence_threshold: float = 0.4,
         device: str = "cuda:0",
         image_size: int = 640
     ):
@@ -61,7 +61,7 @@ class YOLOv8SahiInference:
         overlap_height_ratio: float = 0.2,
         overlap_width_ratio: float = 0.2,
         postprocess_type: str = "NMS",
-        postprocess_match_threshold: float = 0.5,
+        postprocess_match_threshold: float = 0.7,
         postprocess_class_agnostic: bool = True,
         verbose: int = 1
     ):
@@ -108,7 +108,7 @@ class YOLOv8SahiInference:
         save_visualizations: bool = True,
         save_txt: bool = True,
         postprocess_type: str = "NMS",
-        postprocess_match_threshold: float = 0.5,
+        postprocess_match_threshold: float = 0.7,
         postprocess_class_agnostic: bool = True
     ):
         """
@@ -164,8 +164,15 @@ class YOLOv8SahiInference:
                 
                 # Save visualization
                 if save_visualizations:
-                    vis_path = vis_dir / f"{img_name}_pred.jpg"
-                    result.export_visuals(export_dir=str(vis_dir), file_name=f"{img_name}_pred.jpg")
+                    # vis_path = vis_dir / f"{img_name}_pred.jpg"
+                    result.export_visuals(export_dir=str(vis_dir), file_name=f"{img_name}_pred.jpg",text_size=0.8, hide_labels=True)
+                    # result.export_visuals(
+                    #     export_dir=str(vis_dir), 
+                    #     file_name=f"{img_name}_pred.jpg",
+                    #     text_size=0.3,  # Smaller text size (default is 0.5)
+                    #     text_th=1       # Thinner text thickness (default is 2)
+                    # )
+                
                 
                 # Save labels in YOLO format
                 if save_txt:
@@ -299,9 +306,9 @@ def main():
     """Example usage of SAHI sliced inference"""
     
     # Configuration
-    MODEL_PATH = "../runs/segment/yolov8_sandbag_seg_v5/weights/best.pt"  # Adjust to your model
-    INPUT_DIR = "S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/data/IMG_2022_1pK.JPG"  # Directory with images to process
-    # INPUT_DIR = "S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/data"  # Directory with images to process
+    MODEL_PATH = "S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/runs/segment/yolov8_sandbag_seg_v5/weights/best.pt"  # Adjust to your model
+    # INPUT_DIR = "S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/data/IMG_2022_1pK.JPG"  # Directory with images to process
+    INPUT_DIR = "S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/data"  # Directory with images to process
     OUTPUT_DIR = "S:/MyFiles/Studia/Magisterskie/Sem2/Worki/detekcja_workow/runs/segment/sahi_predictions"
     
     # SAHI parameters
@@ -309,7 +316,7 @@ def main():
     SLICE_WIDTH = 640
     OVERLAP_HEIGHT_RATIO = 0.2  # 20% overlap
     OVERLAP_WIDTH_RATIO = 0.2   # 20% overlap
-    CONFIDENCE_THRESHOLD = 0.25
+    CONFIDENCE_THRESHOLD = 0.4
     
     # Initialize inference
     print("🔧 Initializing SAHI inference...")
@@ -331,7 +338,7 @@ def main():
         save_visualizations=True,
         save_txt=True,
         postprocess_type="NMS",
-        postprocess_match_threshold=0.5,
+        postprocess_match_threshold=0.7,  # Higher IoU threshold for better NMS
         postprocess_class_agnostic=True
     )
     
