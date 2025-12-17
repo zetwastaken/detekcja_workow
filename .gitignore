@@ -5,6 +5,9 @@
 
 # Project artifacts
 output/
+runs/
+datasets/
+depth_tiles/
 
 # Python cache and bytecode
 __pycache__/
