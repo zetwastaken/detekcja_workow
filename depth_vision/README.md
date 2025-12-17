@@ -5,6 +5,7 @@ Monocular depth estimation using multiple state-of-the-art models:
 - **Depth Anything V2** - Latest high-performance depth estimator
 - **ZoeDepth** - High-quality metric depth estimation
 - **Marigold** - Diffusion-based depth estimation with fine details
+- **Depth Pro** - Apple ML Research foundation model for metric depth
 
 ## Setup
 
@@ -35,3 +36,21 @@ Monocular depth estimation using multiple state-of-the-art models:
 | ensemble=1, steps=50    | Good     | ~70s   | Single prediction, full quality |
 | ensemble=5, steps=50    | Best     | ~6min  | Production, highest accuracy    |
 | ensemble=10, steps=50   | Maximum  | ~12min | Research, best possible quality |
+
+### Depth Pro (Apple ML Research)
+- `foundation` - Zero-shot metric depth estimation, ~2GB
+  - High-resolution output (up to 2.25 megapixels)
+  - Sharp boundary delineation
+  - Metric depth in meters
+  - Fast inference (~0.3s on GPU)
+  
+**Installation:**
+```bash
+pip install git+https://github.com/apple/ml-depth-pro.git
+```
+
+**Usage:**
+```python
+estimator = create_depth_estimator("depth_pro")
+depth_map = estimator.estimate(image)  # Returns metric depth in meters
+```

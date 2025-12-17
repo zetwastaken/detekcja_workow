@@ -7,10 +7,12 @@ from .midas import MiDaSDepthEstimator
 from .depth_anything import DepthAnythingEstimator
 from .zoedepth import ZoeDepthEstimator
 from .marigold import MarigoldDepthEstimator
+from .depth_pro import DepthProEstimator
 
 __all__ = [
     "MiDaSDepthEstimator",
     "DepthAnythingEstimator",
     "ZoeDepthEstimator",
     "MarigoldDepthEstimator",
+    "DepthProEstimator",
 ]

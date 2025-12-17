@@ -8,9 +8,9 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
-import seaborn as sns
 from datetime import datetime
 import argparse
+from utils.training_results import load_training_results
 
 # Project paths
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -78,60 +78,6 @@ def find_all_training_runs() -> dict:
                 runs[key] = (run_folder, model_type, display_name)
 
     return runs
-
-
-def load_training_results(run_folder: Path) -> dict:
-    """
-    Load training results from a run folder.
-    Returns dict with best epoch metrics.
-    """
-    results_file = run_folder / "results.csv"
-
-    try:
-        df = pd.read_csv(results_file)
-        # Clean column names (remove leading/trailing spaces)
-        df.columns = df.columns.str.strip()
-
-        # Find best epoch by mAP50-95 (for segmentation, column is 'metrics/mAP50-95(M)')
-        # Try different column name formats
-        map_col = None
-        for col in df.columns:
-            if "mAP50-95" in col:
-                map_col = col
-                break
-
-        if map_col is None:
-            print(f"Warning: Could not find mAP50-95 column in {run_folder.name}")
-            return None
-
-        df = df.dropna(subset=[map_col])
-
-        if df.empty:
-            return None
-
-        best_idx = df[map_col].idxmax()
-        best = df.loc[best_idx]
-
-        # Extract metrics with flexible column names
-        def get_metric(df_row, pattern):
-            for col in df.columns:
-                if pattern.lower() in col.lower():
-                    return float(df_row[col])
-            return np.nan
-
-        return {
-            "run_folder": run_folder.name,
-            "best_epoch": int(best.get("epoch", best_idx)),
-            "total_epochs": len(df),
-            "mAP50-95": get_metric(best, "mAP50-95"),
-            "mAP50": get_metric(best, "mAP50("),
-            "precision": get_metric(best, "precision"),
-            "recall": get_metric(best, "recall"),
-            "results_df": df,  # Keep full dataframe for plotting
-        }
-    except Exception as e:
-        print(f"Error loading results from {run_folder}: {e}")
-        return None
 
 
 def compare_all_models(filter_type: str = None) -> tuple:

@@ -328,15 +328,17 @@ def process_multiple_images(
 
 
 if __name__ == "__main__":
-    depth_map = main("midas", model_type="DPT_Large")
+    # depth_map = main("midas", model_type="DPT_Large")
 
-    depth_map_2 = main("depth_anything", model_size="large")
+    # depth_map_2 = main("depth_anything", model_size="large")
 
-    depth_map_3 = main("zoedepth", model_type="NK")
+    # depth_map_3 = main("zoedepth", model_type="NK")
 
-    depth_map_4 = main(
-        "marigold", model_variant="base", num_inference_steps=50, ensemble_size=1
-    )  # +/-1 min per ensemble for GTX 1070 TI
+    # depth_map_4 = main(
+    #     "marigold", model_variant="base", num_inference_steps=50, ensemble_size=1
+    # )  # +/-1 min per ensemble for GTX 1070 TI
+
+    depth_map_5 = main("depth_pro")
 
     # Example 3: Process multiple images
     # images = ["data/worki_1.jpg", "data/worki_2.jpg"]
