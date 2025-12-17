@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import List
 from datetime import datetime
 
 import cv2
@@ -29,7 +28,6 @@ from tqdm import tqdm
 try:
     from sahi import AutoDetectionModel
     from sahi.predict import get_sliced_prediction
-    from sahi.utils.cv import read_image_as_pil
 except ImportError:
     print("ERROR: SAHI is not installed. Please install it with: pip install sahi")
     sys.exit(1)
@@ -399,7 +397,10 @@ def main():
         f.write("\n" + "=" * 80 + "\n")
         f.write(f"Total images processed: {len(image_stats)}\n")
         f.write(f"Total detections: {total_detections}\n")
-        f.write(f"Average detections per image: {total_detections / len(image_stats):.2f}\n")
+        if len(image_stats) > 0:
+            f.write(f"Average detections per image: {total_detections / len(image_stats):.2f}\n")
+        else:
+            f.write("Average detections per image: N/A (no images processed)\n")
         f.write("=" * 80 + "\n")
     
     print("\n" + "=" * 80)
@@ -407,7 +408,10 @@ def main():
     print(f"✓ Results saved to: {run_output_dir}")
     print(f"✓ Total images processed: {len(image_stats)}")
     print(f"✓ Total detections: {total_detections}")
-    print(f"✓ Average detections per image: {total_detections / len(image_stats):.2f}")
+    if len(image_stats) > 0:
+        print(f"✓ Average detections per image: {total_detections / len(image_stats):.2f}")
+    else:
+        print("⚠️  No images were successfully processed")
     print(f"✓ Detection statistics saved to: {stats_file}")
     print("=" * 80)
     
