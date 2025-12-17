@@ -200,6 +200,10 @@ class RGBDDetectionModel(AutoDetectionModel):
         """
         from sahi.prediction import ObjectPrediction
         
+        # Handle empty predictions list
+        if not self._original_predictions:
+            return []
+        
         predictions = self._original_predictions[0]  # YOLO returns list with single result
         object_prediction_list = []
         
@@ -228,8 +232,11 @@ class RGBDDetectionModel(AutoDetectionModel):
             x2 += shift_amount[0]
             y2 += shift_amount[1]
             
-            # Get category name
-            category_name = self.category_names[class_id] if class_id < len(self.category_names) else str(class_id)
+            # Get category name with bounds checking
+            if 0 <= class_id < len(self.category_names):
+                category_name = self.category_names[class_id]
+            else:
+                category_name = str(class_id)
             
             # Create bbox in COCO format [x, y, width, height]
             bbox = [float(x1), float(y1), float(x2 - x1), float(y2 - y1)]
@@ -361,10 +368,13 @@ def main():
             # Rename the output file to match original name
             exported_file = run_output_dir / f"{img_path.stem}.png"
             if exported_file.exists():
-                # Convert to same format as input if needed
-                img_result = cv2.imread(str(exported_file))
-                cv2.imwrite(str(output_path), img_result)
-                exported_file.unlink()  # Remove temporary PNG
+                # If same extension, just rename; otherwise convert format
+                if output_path.suffix.lower() == '.png':
+                    exported_file.rename(output_path)
+                else:
+                    img_result = cv2.imread(str(exported_file))
+                    cv2.imwrite(str(output_path), img_result)
+                    exported_file.unlink()  # Remove temporary PNG
             
             # Clean up temporary RGBD file
             if temp_rgbd_path.exists():
@@ -416,8 +426,6 @@ def main():
     print("=" * 80)
     
     # Cleanup GPU memory
-    del estimator
-    del detection_model
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
