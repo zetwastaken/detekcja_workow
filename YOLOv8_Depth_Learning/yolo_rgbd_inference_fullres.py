@@ -12,9 +12,10 @@ This script performs end-to-end inference on full-resolution RGB images:
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from datetime import datetime
 
 import cv2
@@ -29,21 +30,24 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from utils.image_utils import create_depth_estimator, create_rgbd_image
-from utils.tiling import tile_image
+from utils.tiling import tile_image, tile_coordinates
+from utils.depth_model_config import (
+    extract_depth_model_from_weights,
+    is_rgbd_model,
+    get_depth_model_name_from_weights,
+)
 
 # Paths
 ROOT_DIR = PROJECT_ROOT
 DATA_DIR = ROOT_DIR / "data"
 RUNS_DIR = ROOT_DIR / "runs" / "segment"
 OUTPUT_DIR = ROOT_DIR / "output" / "fullres_rgbd_predictions"
+RGBD_TILES_DIR = ROOT_DIR / "rgbd_tiles"
 
 # Tiling parameters (match training)
 TILE_SIZE = 640
 OVERLAP = 80
 
-# Configuration
-DEPTH_MODEL = "depth_anything"
-DEPTH_CONFIG = {"model_size": "large"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
 
 
@@ -126,6 +130,21 @@ def reassemble_predictions(
     return output.astype(np.uint8)
 
 
+def find_all_rgbd_model_weights() -> List[Path]:
+    """
+    Find all RGBD model weights in the runs directory.
+
+    Returns:
+        List of paths to all RGBD model weights, sorted by modification time (newest first)
+    """
+    rgbd_candidates = sorted(
+        RUNS_DIR.glob("rgbd_**/weights/best.pt"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    return rgbd_candidates
+
+
 def find_model_weights(model_type: str = "auto") -> Path:
     """
     Find model weights.
@@ -139,18 +158,14 @@ def find_model_weights(model_type: str = "auto") -> Path:
     """
     if model_type == "rgbd" or model_type == "auto":
         # Try to find RGBD model
-        rgbd_candidates = sorted(
-            RUNS_DIR.glob("rgbd_**/weights/best.pt"),
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
-        )
+        rgbd_candidates = find_all_rgbd_model_weights()
         if rgbd_candidates:
             return rgbd_candidates[0]
 
         if model_type == "rgbd":
             raise FileNotFoundError(
                 f"No RGBD model weights found under {RUNS_DIR}. "
-                "Please train an RGBD model first using train_rgbd_model.py"
+                "Please train an RGBD model first using train_all_rgbd_models.py"
             )
 
     # Fall back to RGB model or if explicitly requested
@@ -168,8 +183,12 @@ def find_model_weights(model_type: str = "auto") -> Path:
     return rgb_candidates[0]
 
 
-def main():
-    """Main inference pipeline."""
+def main(weights_path: Optional[Path] = None):
+    """Main inference pipeline.
+
+    Args:
+        weights_path: Path to model weights. If None, auto-detect the most recent model.
+    """
     print("=" * 80)
     print("Full-Resolution RGBD Inference Pipeline")
     print("=" * 80)
@@ -191,19 +210,50 @@ def main():
     print(f"Found {len(image_files)} images in {DATA_DIR}")
 
     # Load model (try RGBD first, fall back to RGB)
-    weights_path = find_model_weights("auto")
-    model_type = "RGBD" if "rgbd" in weights_path.parent.parent.name.lower() else "RGB"
+    if weights_path is None:
+        weights_path = find_model_weights("auto")
+    uses_rgbd = is_rgbd_model(weights_path)
+    model_type = "RGBD" if uses_rgbd else "RGB"
     print(f"Loading {model_type} model from: {weights_path}")
     model = YOLO(weights_path)
 
-    # Initialize depth estimator
-    print("Initializing Depth Anything Large estimator...")
-    estimator = create_depth_estimator(DEPTH_MODEL, **DEPTH_CONFIG)
-    print("Estimator ready!")
+    # Initialize depth estimator (auto-detect from trained model)
+    estimator = None
+    depth_model_name = None
+    cached_tiles_dir = None
 
-    # Create output directory with timestamp
+    if uses_rgbd:
+        print("Detecting depth model configuration from trained weights...")
+        depth_model_name = get_depth_model_name_from_weights(weights_path)
+        depth_model_type, depth_config = extract_depth_model_from_weights(weights_path)
+
+        # Check if cached RGBD tiles exist for this depth model
+        if depth_model_name:
+            potential_cache_dir = RGBD_TILES_DIR / depth_model_name
+            if potential_cache_dir.exists() and any(potential_cache_dir.iterdir()):
+                cached_tiles_dir = potential_cache_dir
+                print(f"Found cached RGBD tiles at: {cached_tiles_dir}")
+            else:
+                print(f"No cached tiles found, will generate RGBD on-the-fly")
+                print(
+                    f"Initializing {depth_model_type} estimator with config: {depth_config}"
+                )
+                estimator = create_depth_estimator(depth_model_type, **depth_config)
+                print("Depth estimator ready!")
+        else:
+            print(
+                f"Initializing {depth_model_type} estimator with config: {depth_config}"
+            )
+            estimator = create_depth_estimator(depth_model_type, **depth_config)
+            print("Depth estimator ready!")
+    else:
+        print("RGB model detected - skipping depth estimation")
+
+    # Create output directory with model name and timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_output_dir = OUTPUT_DIR / f"run_{timestamp}"
+    # Extract model name from weights path (e.g., rgbd_depth_anything_large_20251211_153418)
+    model_run_name = weights_path.parent.parent.name
+    run_output_dir = OUTPUT_DIR / f"{model_run_name}_{timestamp}"
     run_output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"\nProcessing {len(image_files)} images...")
@@ -219,21 +269,71 @@ def main():
                 continue
 
             original_shape = rgb_image.shape[:2]
+            image_stem = img_path.stem
 
-            # Generate RGBD image
-            rgbd_image = create_rgbd_image(rgb_image, estimator)
+            # Try to load cached RGBD tiles or generate on-the-fly
+            tiles = []
 
-            # Tile the RGBD image
-            tiles = tile_image(rgbd_image, TILE_SIZE, OVERLAP)
+            if cached_tiles_dir is not None:
+                # Load tiles from cache
+                y_starts, x_starts = tile_coordinates(
+                    original_shape, TILE_SIZE, OVERLAP
+                )
+                all_tiles_found = True
+                cached_tiles = []
+
+                for row_idx, y_start in enumerate(y_starts):
+                    for col_idx, x_start in enumerate(x_starts):
+                        tile_filename = (
+                            f"{image_stem}_R{row_idx:03d}_C{col_idx:03d}.tiff"
+                        )
+                        tile_path = cached_tiles_dir / tile_filename
+
+                        if tile_path.exists():
+                            # Load 4-channel RGBD tile (TIFF preserves all channels)
+                            tile_img = cv2.imread(str(tile_path), cv2.IMREAD_UNCHANGED)
+                            if tile_img is not None:
+                                cached_tiles.append((tile_img, y_start, x_start))
+                            else:
+                                all_tiles_found = False
+                                break
+                        else:
+                            all_tiles_found = False
+                            break
+                    if not all_tiles_found:
+                        break
+
+                if all_tiles_found and cached_tiles:
+                    tiles = cached_tiles
+                else:
+                    # Fallback: generate RGBD on-the-fly if some tiles missing
+                    if estimator is None:
+                        depth_model_type, depth_config = (
+                            extract_depth_model_from_weights(weights_path)
+                        )
+                        print(
+                            f"\n  Some cached tiles missing, initializing {depth_model_type} estimator..."
+                        )
+                        estimator = create_depth_estimator(
+                            depth_model_type, **depth_config
+                        )
+
+                    input_image = create_rgbd_image(rgb_image, estimator)
+                    tiles = tile_image(input_image, TILE_SIZE, OVERLAP)
+
+            elif uses_rgbd and estimator is not None:
+                # Generate RGBD on-the-fly
+                input_image = create_rgbd_image(rgb_image, estimator)
+                tiles = tile_image(input_image, TILE_SIZE, OVERLAP)
+            else:
+                # RGB only
+                tiles = tile_image(rgb_image, TILE_SIZE, OVERLAP)
 
             # Run predictions on tiles
             tile_predictions = []
             for tile_img, y_start, x_start in tiles:
-                # For RGB models, use only first 3 channels
-                if model_type == "RGB":
-                    model_input = tile_img[:, :, :3]
-                else:
-                    model_input = tile_img
+                # Use tile directly (channels already match model type)
+                model_input = tile_img
 
                 # Run YOLO prediction on this tile
                 results = model.predict(
@@ -273,11 +373,79 @@ def main():
     print("=" * 80)
 
     # Cleanup GPU memory
-    del estimator
+    if estimator is not None:
+        del estimator
     del model
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
+    return run_output_dir
+
+
+def run_all_models():
+    """Run inference on all available RGBD models."""
+    print("=" * 80)
+    print("Running inference on ALL RGBD models")
+    print("=" * 80)
+
+    all_weights = find_all_rgbd_model_weights()
+
+    if not all_weights:
+        print("No RGBD models found!")
+        return
+
+    print(f"Found {len(all_weights)} RGBD models:")
+    for i, w in enumerate(all_weights, 1):
+        model_name = w.parent.parent.name
+        print(f"  {i}. {model_name}")
+
+    print()
+    results = []
+
+    for i, weights_path in enumerate(all_weights, 1):
+        model_name = weights_path.parent.parent.name
+        print(f"\n{'#'*80}")
+        print(f"# Model {i}/{len(all_weights)}: {model_name}")
+        print(f"{'#'*80}")
+
+        try:
+            output_dir = main(weights_path)
+            results.append((model_name, "✓ Success", str(output_dir)))
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            results.append((model_name, "❌ Failed", str(e)))
+
+    # Print summary
+    print("\n" + "=" * 80)
+    print("SUMMARY - All Models Inference")
+    print("=" * 80)
+    for model_name, status, info in results:
+        print(f"{status} {model_name}")
+        print(f"   -> {info}")
+    print("=" * 80)
+
 
 if __name__ == "__main__":
-    main()
+    # ========================================
+    # CONFIGURATION - Set your options here
+    # ========================================
+    RUN_ALL_MODELS = True  # Set to True to run on all models, False for single model
+    SPECIFIC_MODEL = None  # Set to model name or path, or None for auto-detect
+    # ========================================
+
+    if RUN_ALL_MODELS:
+        run_all_models()
+    elif SPECIFIC_MODEL:
+        # Check if it's a full path or just a model name
+        model_path = Path(SPECIFIC_MODEL)
+        if not model_path.exists():
+            # Try to find by name
+            potential_path = RUNS_DIR / SPECIFIC_MODEL / "weights" / "best.pt"
+            if potential_path.exists():
+                model_path = potential_path
+            else:
+                print(f"Model not found: {SPECIFIC_MODEL}")
+                sys.exit(1)
+        main(model_path)
+    else:
+        main()

@@ -11,10 +11,10 @@ from datetime import datetime
 
 from ultralytics import YOLO
 
-# Project paths
+# Project paths - use main detekcja_workow folders
 PROJECT_ROOT = Path(__file__).resolve().parent
-DATASETS_DIR = PROJECT_ROOT / "datasets"
-RUNS_DIR = PROJECT_ROOT / "runs"
+DATASETS_DIR = PROJECT_ROOT.parent / "datasets"
+RUNS_DIR = PROJECT_ROOT.parent / "runs"
 
 # Training hyperparameters (same as original yolo_learning.py)
 TRAINING_CONFIG = {

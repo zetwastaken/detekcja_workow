@@ -7,7 +7,6 @@ This script:
 4. Creates separate YOLOv8 datasets for each depth model
 """
 
-import shutil
 import cv2
 from pathlib import Path
 from typing import List, Tuple
@@ -20,6 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from depth_vision.utils import visualize_depth
+from utils.dataset_utils import copy_labels, create_dataset_structure, write_data_yaml
 from utils.image_utils import create_depth_estimator
 from utils.tiling import tile_image_with_names
 
@@ -43,16 +43,16 @@ DEPTH_MODELS = {
 TILE_SIZE = 640
 OVERLAP = 80
 
-# Paths
-DATA_DIR = PROJECT_ROOT / "data"
-DATASETS_DIR = PROJECT_ROOT / "datasets"
-TILING_DIR = PROJECT_ROOT / "tiling"
+# Paths - use main detekcja_workow folders
+DATA_DIR = PROJECT_ROOT.parent / "data"
+DATASETS_DIR = PROJECT_ROOT.parent / "datasets"
+TILING_DIR = PROJECT_ROOT.parent / "tiling"
 CHOOSEN_V1_DIR = TILING_DIR / "choosen_V1"
 SOURCE_DATASET = DATASETS_DIR / "dataset_yolov8_V1"
 
 # Output directories
-DEPTH_MAPS_DIR = PROJECT_ROOT / "depth_maps"
-DEPTH_TILES_DIR = PROJECT_ROOT / "depth_tiles"
+DEPTH_MAPS_DIR = PROJECT_ROOT.parent / "depth_maps"
+DEPTH_TILES_DIR = PROJECT_ROOT.parent / "depth_tiles"
 
 
 def get_selected_filenames() -> Tuple[set, set]:
@@ -91,12 +91,7 @@ def process_single_model(
 
     model_depth_dir.mkdir(parents=True, exist_ok=True)
     model_tiles_dir.mkdir(parents=True, exist_ok=True)
-
-    # Create dataset structure
-    (dataset_dir / "train" / "images").mkdir(parents=True, exist_ok=True)
-    (dataset_dir / "train" / "labels").mkdir(parents=True, exist_ok=True)
-    (dataset_dir / "valid" / "images").mkdir(parents=True, exist_ok=True)
-    (dataset_dir / "valid" / "labels").mkdir(parents=True, exist_ok=True)
+    create_dataset_structure(dataset_dir)
 
     # Initialize depth estimator
     estimator_type = model_config.pop("type")
@@ -164,38 +159,15 @@ def process_single_model(
     print(f"Copied {train_count} tiles to train, {valid_count} tiles to valid")
 
     # Copy labels from source dataset
-    src_train_labels = SOURCE_DATASET / "train" / "labels"
-    src_valid_labels = SOURCE_DATASET / "valid" / "labels"
-    dst_train_labels = dataset_dir / "train" / "labels"
-    dst_valid_labels = dataset_dir / "valid" / "labels"
-
-    for label_file in src_train_labels.glob("*.txt"):
-        shutil.copy2(label_file, dst_train_labels / label_file.name)
-
-    for label_file in src_valid_labels.glob("*.txt"):
-        shutil.copy2(label_file, dst_valid_labels / label_file.name)
+    copy_labels(SOURCE_DATASET, dataset_dir)
 
     # Create data.yaml
-    data_yaml_content = f"""# YOLOv8 Depth Dataset Configuration - {model_name}
-# Generated automatically by generate_depth_datasets.py
-
-# Dataset path (absolute)
-path: {dataset_dir}
-
-# Train and validation image paths (relative to 'path')
-train: train/images
-val: valid/images
-
-# Number of classes
-nc: 1
-
-# Class names
-names:
-  0: sandbag
-"""
-
-    with open(dataset_dir / "data.yaml", "w") as f:
-        f.write(data_yaml_content)
+    write_data_yaml(
+        dataset_dir,
+        class_names=["sandbag"],
+        header=f"YOLOv8 Depth Dataset Configuration - {model_name}",
+        generator="generate_depth_datasets.py",
+    )
 
     print(f"Dataset created at: {dataset_dir}")
 

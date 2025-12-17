@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from utils.training_results import load_training_results
 
-# Project paths
+# Project paths - use main detekcja_workow folders
 PROJECT_ROOT = Path(__file__).resolve().parent
-RUNS_DIR = PROJECT_ROOT / "runs" / "segment"
+RUNS_DIR = PROJECT_ROOT.parent / "runs" / "segment"
 OUTPUT_DIR = PROJECT_ROOT / "comparison_results"
 
 

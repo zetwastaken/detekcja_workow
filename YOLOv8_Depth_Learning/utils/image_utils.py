@@ -1,8 +1,13 @@
 """Image utilities shared across RGBD generation and inference pipelines."""
 
+import sys
+from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+# Add parent directory to path to allow imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from depth_vision.factory import DepthEstimatorFactory
 from depth_vision.utils import normalize_depth
